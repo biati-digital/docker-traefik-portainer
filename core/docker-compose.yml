@@ -5,6 +5,16 @@ services:
     image: "traefik:latest"
     container_name: traefik
     restart: unless-stopped
+    command:
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.edge.address=:8000  
+      - --providers.docker
+      - --log.level=ERROR
+      - --certificatesresolvers.leresolver.acme.httpchallenge=true
+      - --certificatesresolvers.leresolver.acme.email=your-email
+      - --certificatesresolvers.leresolver.acme.storage=./acme.json
+      - --certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=web
     security_opt:
       - "no-new-privileges:true"
     networks:
@@ -45,6 +55,12 @@ services:
       - traefik.http.routers.portainer-secure.rule=Host(`portainer.yourdomain.com`)
       - traefik.http.routers.portainer-secure.service=portainer
       - traefik.http.services.portainer.loadbalancer.server.port=9000
+      # Edge
+      - "traefik.http.routers.edge.rule=Host(`edge.yourdomain.com`)"
+      - "traefik.http.routers.edge.entrypoints=websecure"
+      - "traefik.http.services.edge.loadbalancer.server.port=8000"
+      - "traefik.http.routers.edge.service=edge"
+      - "traefik.http.routers.edge.tls.certresolver=leresolver"
 
 networks:
   proxy:
